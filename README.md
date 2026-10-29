@@ -2,6 +2,8 @@
 
 移动端网页：打开就能判断你的 Android 设备能不能跑 [DroidDeck](https://github.com/Droid-Deck/DroidDeck)（SteamOS on Android），可选跑一段分验证实测水平。
 
+**在线版**：<https://shunamxiao.github.io/droiddeck-device-check/>
+
 **这是第三方非官方工具**，与 DroidDeck 项目无隶属关系，不提供 APK 下载。安装包只从官方 GitHub Release 获取。
 
 ## 开发
