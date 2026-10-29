@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "calibrated": false,
+  "note": "基线是 Adreno 740 档掌机在移动 Chrome 上的估算原始吞吐：桌面参考机（GTX 1650 级 + 桌面 CPU）实测值除以 3 的倍率推得。calibrated=false 时性能结论只作参考、不参与降档；跑 scripts/calibrate.mjs 用真机样本替换后才会启用一致性降档。",
+  "referenceGpu": 740,
+  "baseline": {
+    "aluFill": 11900,
+    "overdraw": 8140,
+    "geometry": 1570,
+    "cpuInt": 340,
+    "cpuFloat": 8.5,
+    "cpuMem": 256
+  },
+  "weights": {
+    "aluFill": 0.3,
+    "geometry": 0.2,
+    "overdraw": 0.1,
+    "cpu": 0.4
+  },
+  "cpuWeights": {
+    "cpuInt": 0.5,
+    "cpuFloat": 0.25,
+    "cpuMem": 0.25
+  }
+}

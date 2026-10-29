@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "android": {
+    "minVersion": 9,
+    "childProcessRestrictionFrom": 14,
+    "autoFixRange": [12, 13]
+  },
+  "storage": {
+    "runtimeGb": 3,
+    "desktopGb": 1.1,
+    "warnBelowGb": 10,
+    "blockBelowGb": 4
+  },
+  "ram": {
+    "hardFloorGb": 6,
+    "minGb": 8,
+    "recommendGb": 12
+  },
+  "tierLabels": {
+    "S": "推荐",
+    "A": "可玩",
+    "B": "实验",
+    "C": "不建议"
+  },
+  "bench": {
+    "minConsistency": 0.55,
+    "downgradeConsistency": 0.4,
+    "upgradeConsistency": 1.15,
+    "timeoutMs": 120000
+  }
+}

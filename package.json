@@ -1,0 +1,24 @@
+{
+  "name": "droiddeck-device-check",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "DroidDeck 设备可行性检测（非官方第三方工具）",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "node scripts/validate-data.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview --host --port 4173",
+    "check": "tsc --noEmit",
+    "validate": "node scripts/validate-data.mjs",
+    "test": "node scripts/validate-data.mjs && node scripts/logic-test.mjs",
+    "smoke": "node scripts/ui-smoke.mjs",
+    "perf": "node scripts/perf-probe.mjs",
+    "calibrate": "node scripts/calibrate.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "playwright": "^1.49.0",
+    "typescript": "^5.7.0",
+    "vite": "^7.0.0"
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 2,
+  "source": "https://github.com/Droid-Deck/DroidDeck/blob/main/app/src/main/java/com/droiddeck/launcher/gpu/GpuInfo.kt",
+  "updated": "2026-10-28",
+  "note": "anchor 是相对 GPU 性能锚点（Adreno 740 = 100），由各 SoC 标称 FP32 峰值除以 A740 的 2089 GFLOPS 推得，仅用于跑分一致性判断。family 与 support 判定完全照搬 App 源码。",
+  "gpus": [
+    {
+      "model": 850,
+      "family": "A8XX",
+      "title": "Adreno 850",
+      "anchor": 213,
+      "note": "SM8975。官方标注实验性：需要手动导入社区实验显示/游戏驱动，Turnip 可能直接报 VK_ERROR_INCOMPATIBLE_DRIVER。"
+    },
+    {
+      "model": 845,
+      "family": "A8XX",
+      "title": "Adreno 845",
+      "anchor": 184,
+      "note": "SM8950。源码按 8xx 家族自动归入已测试，但社区尚无真机报告。"
+    },
+    {
+      "model": 840,
+      "family": "A8XX",
+      "title": "Adreno 840",
+      "anchor": 176,
+      "note": "SM8850（骁龙 8 Elite Gen 5），官方测试覆盖范围内。已有 Adreno 840 的社区问题报告。"
+    },
+    {
+      "model": 830,
+      "family": "A8XX",
+      "title": "Adreno 830",
+      "anchor": 162,
+      "note": "SM8750（骁龙 8 Elite），桌面级性能，社区验证最多的高端档。"
+    },
+    {
+      "model": 829,
+      "family": "A8XX",
+      "title": "Adreno 829",
+      "anchor": 120,
+      "note": "SM8845。8xx 家族自动归入已测试，型号较新，暂无真机报告。"
+    },
+    {
+      "model": 825,
+      "family": "A8XX",
+      "title": "Adreno 825",
+      "anchor": 113,
+      "note": "SM8735（骁龙 8s Gen 4）。已有平板机型（小米 Pad 8）报告 GPU 识别失败，需注意。"
+    },
+    {
+      "model": 812,
+      "family": "A8XX",
+      "title": "Adreno 812",
+      "anchor": 40,
+      "note": "SM6850（骁龙 6 Gen 5）。无公开 FP32 数据，锚点为估算；源码按 8xx 自动归入已测试。"
+    },
+    {
+      "model": 810,
+      "family": "A8XX",
+      "title": "Adreno 810",
+      "anchor": 26,
+      "note": "SM7635（7s Gen 3/7s Gen 4）、SM6650（6 Gen 4）。源码按 8xx 家族归入已测试，但绝对性能接近中端。"
+    },
+    {
+      "model": 750,
+      "family": "A8XX",
+      "title": "Adreno 750",
+      "anchor": 133,
+      "note": "SM8650（骁龙 8 Gen 3）。AYANEO Pocket FIT 即此档，官方主力验证机。"
+    },
+    {
+      "model": 740,
+      "family": "A7XX",
+      "title": "Adreno 740",
+      "anchor": 100,
+      "note": "SM8550（骁龙 8 Gen 2）。AYN Thor、Odin 2、AYANEO Pocket S 等掌机主力，跑分基准档。"
+    },
+    {
+      "model": 735,
+      "family": "A7XX",
+      "title": "Adreno 735",
+      "anchor": 81,
+      "note": "SM8635（骁龙 8s Gen 3），已测试。"
+    },
+    {
+      "model": 732,
+      "family": "A7XX",
+      "title": "Adreno 732",
+      "anchor": 70,
+      "note": "SM7675（骁龙 7+ Gen 3），已测试。"
+    },
+    {
+      "model": 730,
+      "family": "A7XX",
+      "title": "Adreno 730",
+      "anchor": 80,
+      "note": "SM8450 / SM8475（骁龙 8 Gen 1 / 8+ Gen 1），已测试，但发热明显。"
+    },
+    {
+      "model": 725,
+      "family": "A7XX",
+      "title": "Adreno 725",
+      "anchor": 57,
+      "note": "SM7475（骁龙 7+ Gen 2），源码判定为已测试的下限档。"
+    },
+    {
+      "model": 722,
+      "family": "A7XX_LOW",
+      "title": "Adreno 722",
+      "anchor": 56,
+      "note": "SM7750（骁龙 7 Gen 4）。实验档：使用测试版驱动，必须开启 sysmem 渲染。"
+    },
+    {
+      "model": 720,
+      "family": "A7XX_LOW",
+      "title": "Adreno 720",
+      "anchor": 48,
+      "note": "SM7550（骁龙 7 Gen 3）。实验档：使用测试版驱动，必须开启 sysmem 渲染。"
+    },
+    {
+      "model": 710,
+      "family": "A7XX_LOW",
+      "title": "Adreno 710",
+      "anchor": 23,
+      "note": "SM6450 / SM6475 / SM7435 / SM6435。实验档：使用测试版驱动，必须开启 sysmem 渲染，性能偏弱。"
+    },
+    {
+      "model": 660,
+      "family": "A6XX",
+      "title": "Adreno 660",
+      "anchor": 62,
+      "note": "SM8350（骁龙 888 / 888+），源码判定为越界（未测试）。"
+    },
+    {
+      "model": 650,
+      "family": "A6XX",
+      "title": "Adreno 650",
+      "anchor": 49,
+      "note": "SM8250 / SM8250-AB / SM8250-AC（865 / 865+ / 870）。源码明确标记为已测试（Retroid Pocket 5 等在用），但 README 只写了 730 以上。"
+    },
+    {
+      "model": 644,
+      "family": "A6XX",
+      "title": "Adreno 644",
+      "anchor": 33,
+      "note": "SM7450（骁龙 7 Gen 1），越界档。"
+    },
+    {
+      "model": 642,
+      "family": "A6XX",
+      "title": "Adreno 642 / 642L",
+      "anchor": 27,
+      "note": "SM7325 / SM7350（778G / 778G+ / 780G / 782G），越界档。778G 实际出货为 642L。"
+    },
+    {
+      "model": 640,
+      "family": "A6XX",
+      "title": "Adreno 640",
+      "anchor": 50,
+      "note": "SM8150 / SM8150-AC / SM8150P（855 / 860 / 855+），越界档。"
+    },
+    {
+      "model": 630,
+      "family": "A6XX",
+      "title": "Adreno 630",
+      "anchor": 35,
+      "note": "SDM845 / SDM850（骁龙 845 / 850），越界档。"
+    },
+    {
+      "model": 620,
+      "family": "A6XX",
+      "title": "Adreno 620",
+      "anchor": 28,
+      "note": "SM7250（765 / 765G / 768G），越界档。"
+    },
+    {
+      "model": 619,
+      "family": "A6XX",
+      "title": "Adreno 619",
+      "anchor": 22,
+      "note": "SM6375 / SM4350（695 / 6s Gen 3 / 480），越界档，实际不可用。"
+    },
+    {
+      "model": 618,
+      "family": "A6XX",
+      "title": "Adreno 618",
+      "anchor": 20,
+      "note": "SM7150 / SM7125（730 / 730G / 732G / 720G），越界档。"
+    },
+    {
+      "model": 616,
+      "family": "A6XX",
+      "title": "Adreno 616",
+      "anchor": 15,
+      "note": "SDM710 / SDM712（骁龙 710 / 712），越界档。"
+    },
+    {
+      "model": 613,
+      "family": "A6XX",
+      "title": "Adreno 613",
+      "anchor": 8,
+      "note": "SM4450（骁龙 4 Gen 2），越界档，基本不可用。"
+    },
+    {
+      "model": 610,
+      "family": "A6XX",
+      "title": "Adreno 610",
+      "anchor": 6,
+      "note": "SM6225 / SM6115 / SM4250（680 / 685 / 662 / 460），越界档，基本不可用。"
+    }
+  ]
+}
