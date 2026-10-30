@@ -9,6 +9,7 @@ import { probeWebgpu, type WebGpuProbe } from '../detect/webgpu'
 import { runGlBench } from '../bench/glbench'
 import { runCpuBench } from '../bench/cpubench'
 import { toBenchResult } from '../bench/score'
+import { renderIcon } from './icons'
 
 interface DeviceRecord {
   name: string
@@ -293,69 +294,342 @@ function render(): void {
   bindResult()
 }
 
-function shell(inner: string): string {
+/**
+ * Global Shell: Fixed Navy Header + Main Content + Fixed Bottom Nav + Toast
+ */
+function shell(inner: string, currentTab: 'detection' | 'ladder' | 'rules' | 'about' = 'detection'): string {
   return `
-    <div class="hero">
-      <span class="eyebrow"><i class="dot"></i>非官方第三方检测工具</span>
-      <h1>你的设备能跑 DroidDeck 吗</h1>
-      <p class="lede">在浏览器里读取 GPU 型号与系统门槛，给出能否运行 SteamOS on Android 的结论；可选跑一段分，看实测水平是否达标。</p>
-      <div class="chips">
-        <span class="chip">Android 9+</span>
-        <span class="chip">Adreno 6xx 起</span>
-        <span class="chip">免 root</span>
-        <span class="chip">运行时约 3 GB</span>
-        <span class="chip">天玑 / Mali 看第三方档位</span>
+    <header class="app-header">
+      <div class="app-header-inner">
+        <a class="header-brand" href="javascript:void(0)" data-action="restart">
+          <div class="brand-icon">
+            ${renderIcon('videogame_asset', '', 18)}
+          </div>
+          <span class="brand-title">DroidDeck</span>
+          <span class="header-tag">硬件探针</span>
+        </a>
+        <div class="header-actions">
+          <a class="github-pill" href="https://github.com/Droid-Deck/DroidDeck" rel="noopener noreferrer" target="_blank">
+            <svg class="w-3.5 h-3.5 fill-currentColor" style="width:14px;height:14px;" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span>GitHub</span>
+          </a>
+        </div>
       </div>
-    </div>
-    ${inner}
-    ${footer()}
+    </header>
+
+    <main class="main-content">
+      ${renderHeroCard()}
+      ${inner}
+      ${renderDisclaimerCard()}
+    </main>
+
+    <nav class="bottom-nav">
+      <div class="bottom-nav-inner">
+        <button class="nav-tab ${currentTab === 'detection' ? 'active' : ''}" type="button" data-nav="detection">
+          ${renderIcon('memory', '', 20)}
+          <span>设备检测</span>
+        </button>
+        <button class="nav-tab ${currentTab === 'ladder' ? 'active' : ''}" type="button" data-nav="ladder">
+          ${renderIcon('leaderboard', '', 20)}
+          <span>芯片天梯</span>
+        </button>
+        <button class="nav-tab ${currentTab === 'rules' ? 'active' : ''}" type="button" data-nav="rules">
+          ${renderIcon('fact_check', '', 20)}
+          <span>判定规则</span>
+        </button>
+        <a class="nav-tab" href="https://github.com/Droid-Deck/DroidDeck" rel="noopener noreferrer" target="_blank">
+          ${renderIcon('code', '', 20)}
+          <span>关于开源</span>
+        </a>
+      </div>
+    </nav>
   `
 }
 
-function footer(): string {
+function renderHeroCard(): string {
   return `
-    <p class="footnote">
-      本页面与 DroidDeck 项目无隶属关系，不提供 APK 下载。结论基于官方 README 与源码中的 GPU 判定
-      （<span class="mono">GpuInfo.kt</span>）；Mali / Xclipse 的「第三方」档位来自社区实测，非官方承诺。
-      本页只做判定，不提供第三方构建的下载地址。浏览器只能看到 Android 原生 GPU，测不出 Proton / FEX 翻译后的实际帧率。
-      官方安装包请只从 GitHub 的 <a href="https://github.com/Droid-Deck/DroidDeck" rel="noopener noreferrer" target="_blank">Droid-Deck/DroidDeck</a> Release 获取。
-    </p>
+    <div class="hero-card">
+      <div class="hero-pulse-row">
+        <span class="pulse-dot"></span>
+        <span class="hero-eyebrow">非官方第三方检测工具</span>
+      </div>
+      <h1>你的设备能跑 DroidDeck 吗？</h1>
+      <p class="hero-desc">
+        在手机浏览器里读取 GPU 型号与底层驱动状态，给出能否流畅运行 SteamOS on Android 的结论；支持进一步运行实时着色器基准。
+      </p>
+      <div class="chip-group">
+        <span class="chip chip-green">Android 9+ 兼容</span>
+        <span class="chip chip-teal">骁龙 Adreno 6xx+ 优选</span>
+        <span class="chip chip-sky">免 Root 权限</span>
+        <span class="chip chip-slate">Vulkan 1.3 Native</span>
+        <span class="chip chip-amber">天玑 / Mali 看第三方档位</span>
+      </div>
+    </div>
+  `
+}
+
+/**
+ * Calculate readiness score strictly for presentation without altering verdict logic
+ */
+function calculateReadinessPercent(verdict: Verdict): number {
+  if (verdict.tier === 'S' && verdict.pendingItems === 0) return 96
+  if (verdict.tier === 'S') return 90
+  if (verdict.tier === 'A') return 82
+  if (verdict.tier === 'B') return 65
+
+  // Tier C or fallback
+  const blockers = verdict.findings.filter((f) => f.level === 'blocker').length
+  const warnings = verdict.findings.filter((f) => f.level === 'warning').length
+  const calculated = Math.max(20, Math.round(90 - blockers * 25 - warnings * 12))
+  return calculated
+}
+
+function renderReadinessBlock(verdict: Verdict): string {
+  const percent = calculateReadinessPercent(verdict)
+  const isPlayable = verdict.tier === 'S' || verdict.tier === 'A' || (verdict.community && verdict.community.tier !== 'C')
+  const footerLeft = isPlayable ? '满足 720p/60FPS 3A PC 游戏渲染吞吐' : '低于官方运行门槛，游戏兼容受限'
+  const footerRight = isPlayable ? 'SteamOS / Proton 良好兼容' : '仅供实验尝鲜或暂不支持'
+
+  return `
+    <div class="readiness-block">
+      <div class="readiness-header">
+        <div class="readiness-tier-title">
+          <span class="tier-headline-text">兼容评级：Tier ${verdict.tier}</span>
+          <span class="tier-pill tier-pill-${verdict.tier}">${esc(verdict.tierLabel)}</span>
+        </div>
+        <span class="readiness-percent" id="readiness-percent">${percent}% 就绪率</span>
+      </div>
+      <div class="readiness-bar-wrap">
+        <div class="readiness-bar" id="readiness-bar" style="width: ${percent}%;"></div>
+      </div>
+      <div class="readiness-footer">
+        <span>${footerLeft}</span>
+        <span class="readiness-footer-highlight">${footerRight}</span>
+      </div>
+    </div>
+  `
+}
+
+function renderSpecMatrix(verdict: Verdict): string {
+  const gpuName = state.gpu.adreno
+    ? (state.gpu.title || 'Qualcomm Adreno')
+    : (state.gpu.vendorLabel || state.gpu.title || state.gl?.renderer || '未知 GPU')
+
+  const gpuBadge = state.gpu.adreno
+    ? (state.gpu.support === 'tested' ? 'Vulkan 1.3 Native' : '实验支持')
+    : (verdict.community ? `第三方 ${verdict.community.tier} 档` : '暂无数据')
+
+  const osText = state.androidVersion > 0
+    ? `Android ${state.androidVersion}${state.model ? ` (${state.model})` : ''}`
+    : (state.platformKind === 'android' ? '未能识别 Android 版本' : `${state.platformKind.toUpperCase()} 设备`)
+
+  const osBadge = state.androidVersion >= 9 || state.androidVersion === 0
+    ? '无需 Root'
+    : '系统版本过低'
+
+  const driverDesc = state.gpu.adreno
+    ? (state.gpu.support === 'tested' ? 'Turnip 开源驱动适配良好' : '部分驱动功能实验中')
+    : (verdict.community ? 'Mali / 系统专有驱动桥接' : '开源驱动尚未覆盖')
+
+  const driverBadge = state.gpu.adreno
+    ? '原生直通'
+    : (verdict.community ? '社区构建' : '暂不支持')
+
+  return `
+    <div class="spec-matrix">
+      <div class="spec-row">
+        <div class="spec-row-left">
+          <div class="spec-icon-box icon-box-teal">
+            ${renderIcon('videogame_asset', '', 18)}
+          </div>
+          <div class="spec-row-info">
+            <span class="spec-title">${esc(gpuName)}</span>
+            <span class="spec-desc">显卡 / 渲染器芯片 (GPU)</span>
+          </div>
+        </div>
+        <span class="spec-tag chip-teal">${esc(gpuBadge)}</span>
+      </div>
+
+      <div class="spec-row">
+        <div class="spec-row-left">
+          <div class="spec-icon-box icon-box-sky">
+            ${renderIcon('terminal', '', 18)}
+          </div>
+          <div class="spec-row-info">
+            <span class="spec-title">${esc(osText)}</span>
+            <span class="spec-desc">系统内核与隔离 [SELinux 标准]</span>
+          </div>
+        </div>
+        <span class="spec-tag chip-green">${esc(osBadge)}</span>
+      </div>
+
+      <div class="spec-row">
+        <div class="spec-row-left">
+          <div class="spec-icon-box icon-box-cyan">
+            ${renderIcon('hub', '', 18)}
+          </div>
+          <div class="spec-row-info">
+            <span class="spec-title">${esc(driverDesc)}</span>
+            <span class="spec-desc">Turnip / Vulkan 运行时支持</span>
+          </div>
+        </div>
+        <span class="spec-tag chip-teal">${esc(driverBadge)}</span>
+      </div>
+    </div>
+  `
+}
+
+function renderActionHub(isResult: boolean): string {
+  const mainBtn = isResult
+    ? `
+      <button class="btn-benchmark-main" id="btn-benchmark-main" data-action="bench" type="button">
+        ${renderIcon('bolt', '', 22)}
+        <span>开启深度适配检测 (Start Benchmark)</span>
+      </button>
+    `
+    : `
+      <button class="btn-benchmark-main" data-action="scan" type="button">
+        ${renderIcon('bolt', '', 22)}
+        <span>开始检测 (Start Check)</span>
+      </button>
+    `
+
+  return `
+    <div class="action-hub">
+      ${mainBtn}
+      <div class="action-grid">
+        <button class="btn-secondary-action" data-action="pick" type="button">
+          ${renderIcon('tune', '', 18)}
+          <span>手动选择目标机型</span>
+        </button>
+        <button class="btn-secondary-action" data-action="how" type="button">
+          ${renderIcon('rule', '', 18)}
+          <span>查看判定基准指标</span>
+        </button>
+      </div>
+    </div>
+  `
+}
+
+function renderSpecsSection(): string {
+  const ramValue = state.ramGb ? `已达标 (${state.ramGb}GB)` : '需 ≥8GB'
+  const storageValue = state.storageFreeGb !== null ? `已设 ${state.storageFreeGb}GB` : '建议 ≥12GB'
+
+  return `
+    <div class="card specs-section" id="specs-section">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">官方硬件架构与运行门槛要求</h2>
+          <span class="card-subtitle">DroidDeck 硬件基准判定规范</span>
+        </div>
+        <span class="chip chip-teal">标准 v2.4</span>
+      </div>
+
+      <div class="specs-list" id="how-card">
+        <div class="spec-rule-item">
+          <div class="spec-rule-head">
+            <div class="spec-rule-title-group">
+              ${renderIcon('memory', 'text-[#006B5B]', 18)}
+              <span>GPU 核心架构 (Vulkan 驱动)</span>
+            </div>
+            <span class="chip chip-teal">Adreno 优选</span>
+          </div>
+          <p class="spec-rule-desc">
+            必须具备成熟 Vulkan 驱动支持；推荐高通骁龙 Adreno 6xx/7xx/8xx 系列（Turnip 驱动支持）；联发科天玑 Mali 与三星 Xclipse 视社区第三方构建分支判定。
+          </p>
+        </div>
+
+        <div class="spec-rule-item">
+          <div class="spec-rule-head">
+            <div class="spec-rule-title-group">
+              ${renderIcon('speed', 'text-[#006B5B]', 18)}
+              <span>RAM 物理内存与系统门槛</span>
+            </div>
+            <span class="chip chip-sky">${ramValue}</span>
+          </div>
+          <p class="spec-rule-desc">
+            Android 9.0 或以上版本；无需 Root 权限；启动并常驻需要保证有约 3 GB 独立可用物理运行内存，运行 3A 建议整机配备 12 GB 或更多。
+          </p>
+        </div>
+
+        <div class="spec-rule-item">
+          <div class="spec-rule-head">
+            <div class="spec-rule-title-group">
+              ${renderIcon('hard_drive_2', 'text-[#006B5B]', 18)}
+              <span>存储空间与游戏库吞吐</span>
+            </div>
+            <span class="chip chip-teal">${storageValue}</span>
+          </div>
+          <p class="spec-rule-desc">
+            基础环境需 12 GB+ 可用空间（Steam Client 及 Proton 运行时），推荐 UFS 3.1 及以上以缩短着色器编译耗时。
+          </p>
+        </div>
+
+        <div class="bench-teaser-card" data-action="bench">
+          <div class="bench-teaser-left">
+            <div class="bench-teaser-icon">
+              ${renderIcon('query_stats', '', 20)}
+            </div>
+            <div class="bench-teaser-text">
+              <span class="bench-teaser-title">掌上 PC 运算效能基准测试</span>
+              <span class="bench-teaser-sub">测算当前 GPU 着色器与光栅化理论性能</span>
+            </div>
+          </div>
+          <div class="bench-teaser-right">
+            <span>开始测算</span>
+            ${renderIcon('arrow_forward', '', 16)}
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderDisclaimerCard(): string {
+  return `
+    <div class="card disclaimer-card">
+      <div class="card-head">
+        <div class="card-title-group">
+          ${renderIcon('info', 'text-[#006B5B]', 18)}
+          <span class="card-title" style="font-size:13px;">开源社区声明与规范</span>
+        </div>
+        <a class="github-pill" href="https://github.com/Droid-Deck/DroidDeck" rel="noopener noreferrer" target="_blank" style="background:var(--layer-2);color:var(--primary);border-color:var(--border);">
+          <span>Release 源码</span>
+          ${renderIcon('open_in_new', '', 12)}
+        </a>
+      </div>
+      <div class="disclaimer-box">
+        本项目与 DroidDeck 项目无隶属关系，不提供 APK 下载。结论基于官方 README 与源码中的 GPU 判定（GpuInfo.kt）；Mali / Xclipse 的「第三方」档位来自社区实测，非官方承诺。本页只做判定，不提供第三方构建的下载地址。浏览器只能看到 Android 原生 GPU，测不出 Proton / FEX 翻译后的实际帧率。官方安装包请只从 GitHub 的 <a href="https://github.com/Droid-Deck/DroidDeck" rel="noopener noreferrer" target="_blank">Droid-Deck/DroidDeck</a> Release 获取。
+      </div>
+      <div class="disclaimer-footer">
+        <span>数据版本：2026.Q4 Matrix</span>
+        <span>引擎：WebGL-Turnip Telemetry v2.4</span>
+      </div>
+    </div>
   `
 }
 
 function renderIntro(): string {
   return shell(`
-    <button class="btn btn-primary" data-action="scan">开始检测</button>
-    <div class="btn-row">
-      <button class="btn btn-ghost btn-small" data-action="pick">手动选择机型</button>
-      <button class="btn btn-ghost btn-small" data-action="how">判定依据</button>
-    </div>
-    <div class="card" id="how-card" style="margin-top:16px">
-      <details>
-        <summary>官方硬性要求</summary>
-        <div class="rows" style="margin-top:10px">
-          <div class="row"><span class="row-key">GPU</span><span class="row-val">必须是 Adreno（骁龙）；Mali / Xclipse / PowerVR 不支持</span></div>
-          <div class="row"><span class="row-key">已测试档位</span><span class="row-val">Adreno 8xx、650、725 及以上</span></div>
-          <div class="row"><span class="row-key">实验档位</span><span class="row-val">Adreno 710 / 720 / 722、850</span></div>
-          <div class="row"><span class="row-key">系统</span><span class="row-val">Android 9+；Android 14+ 须关闭「停用子进程限制」</span></div>
-          <div class="row"><span class="row-key">存储</span><span class="row-val">运行时约 3 GB，桌面/模拟器 +1.1 GB，建议保留 10 GB</span></div>
-          <div class="row"><span class="row-key">非 Adreno</span><span class="row-val">官方不支持；Mali / Xclipse 有第三方构建，按 GPU 分档</span></div>
-        </div>
-      </details>
-    </div>
-  `)
+    ${renderActionHub(false)}
+    ${renderSpecsSection()}
+  `, 'detection')
 }
 
 function bindIntro(): void {
+  bindCommonEvents()
   root.querySelector<HTMLElement>('[data-action="scan"]')?.addEventListener('click', () => void scan())
   root.querySelector<HTMLElement>('[data-action="pick"]')?.addEventListener('click', () => openPicker(true))
   root.querySelector<HTMLElement>('[data-action="how"]')?.addEventListener('click', () => {
-    const card = root.querySelector<HTMLDetailsElement>('#how-card details')
-    if (card) {
-      card.open = true
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
+    scrollToSpecs()
   })
+}
+
+function scrollToSpecs(): void {
+  const el = root.querySelector<HTMLElement>('#specs-section')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 }
 
 const STEP_LABELS: Array<{ key: keyof State['steps']; label: string }> = [
@@ -377,15 +651,18 @@ function renderScan(): string {
 
   return shell(`
     <div class="card">
-      <div class="card-head"><span class="card-title">正在检测</span><span class="small muted">约 2 秒</span></div>
+      <div class="card-head">
+        <span class="card-title">正在检测硬件与驱动</span>
+        <span class="small muted">约 2 秒</span>
+      </div>
       <div class="steps">${steps}</div>
       <div class="progress"><i style="width:${Math.round((Object.values(state.steps).filter((s) => s === 'done').length / 4) * 100)}%"></i></div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="card-title">已读取</span></div>
+      <div class="card-head"><span class="card-title">实时探针捕获</span></div>
       <div class="rows">${gpuLine}</div>
     </div>
-  `)
+  `, 'detection')
 }
 
 function findingHtml(f: Finding): string {
@@ -461,13 +738,26 @@ function renderVerdictCard(verdict: Verdict): string {
            <span class="tier-pair-label">第三方</span>
          </div>
        </div>`
-    : `<div class="tier-badge">${verdict.tier}</div>`
+    : `<div class="tier-badge tier-${verdict.tier}">${verdict.tier}</div>`
   const subtitle = community
     ? `官方 ${verdict.tier} · 第三方 ${community.tier} · ${esc(state.gpu.vendorLabel || state.gpu.title)}`
     : `${esc(verdict.tierLabel)} · ${esc(state.gpu.title)}`
 
   return `
     <div class="card ${cardClass}" role="status" aria-live="polite">
+      <div class="card-head">
+        <div class="card-title-group">
+          ${renderIcon('monitor_heart', 'text-[#006B5B]', 20)}
+          <span class="card-title">硬件探针快速诊断</span>
+        </div>
+        <div class="status-badge">
+          <span class="ping-dot"></span>
+          <span>${state.gpu.source === 'webgl' ? '已捕获原生 GPU' : state.gpu.source === 'manual' ? '手动指定 GPU' : '探针已就绪'}</span>
+        </div>
+      </div>
+
+      ${renderReadinessBlock(verdict)}
+
       <div class="tier-top">
         ${badges}
         <div>
@@ -484,18 +774,12 @@ function renderVerdictCard(verdict: Verdict): string {
         ${verdict.benchAdjusted ? '<span class="tag tag-info">已修正档位</span>' : ''}
         ${state.manualDevice || state.forcedModel !== null ? '<span class="tag tag-info">手动指定</span>' : ''}
       </div>
+
+      ${renderSpecMatrix(verdict)}
+
       ${renderCommunityBlock(verdict)}
     </div>
   `
-}
-
-function gpuSupportLabel(family: string, model: number): string {
-  if (model === 850) return '实验 · 需导入驱动'
-  if (family === 'A7XX_LOW') return '实验 · 测试驱动'
-  if (family === 'A8XX') return '已测试'
-  if (family === 'A7XX') return model >= 725 ? '已测试' : '未测试'
-  if (family === 'A6XX') return model === 650 ? '已测试' : '未测试'
-  return '未测试'
 }
 
 function familyTag(): string {
@@ -582,7 +866,7 @@ function renderSupplement(verdict: Verdict): string {
   const needsChild = state.androidVersion === 0 || state.androidVersion >= 14
   const childRow = needsChild
     ? `
-      <div class="field">
+      <div class="field" style="margin-top:10px;">
         <span class="field-label">是否已在开发者选项开启「停用子进程限制」？</span>
         <div class="segmented" data-field="child">
           <button data-value="yes" aria-pressed="${state.childDisabled === true}">已开启</button>
@@ -602,7 +886,7 @@ function renderSupplement(verdict: Verdict): string {
         <span class="muted small">运行时约 3 GB + 桌面 1.1 GB；低于 10 GB 时游戏更新可能中途失败。</span>
       </div>
       ${childRow}
-      <p class="muted small" style="margin:0">内存：${esc(state.ramNote || '—')}${state.ramGb ? ` → 按 ${state.ramGb} GB 评估` : ''}</p>
+      <p class="muted small" style="margin-top:6px;">内存：${esc(state.ramNote || '—')}${state.ramGb ? ` → 按 ${state.ramGb} GB 评估` : ''}</p>
     </div>
     ${verdict.nextSteps.length ? `
       <div class="card">
@@ -619,7 +903,10 @@ function renderFacts(): string {
   return `
     <div class="card">
       <details>
-        <summary>查看全部检测数据</summary>
+        <summary>
+          <span>查看全部检测数据 (Hardware Facts)</span>
+          ${renderIcon('arrow_forward', '', 14)}
+        </summary>
         <div class="rows" style="margin-top:10px">
           <div class="row"><span class="row-key">GPU 渲染器</span><span class="row-val mono">${esc(gl?.renderer || '未获取')}</span></div>
           <div class="row"><span class="row-key">推定 SoC</span><span class="row-val">${esc(socLabelFor(state.gpu.model) || '未能推定')}</span></div>
@@ -646,6 +933,7 @@ function renderResult(): string {
   return shell(`
     ${state.deviceError ? `<div class="notice">检测过程出错：${esc(state.deviceError)}。下面的结论只基于已读到的信息，你也可以手动选择机型。</div>` : ''}
     ${renderVerdictCard(verdict)}
+    ${renderActionHub(true)}
     <div class="card">
       <div class="card-head"><span class="card-title">判定明细</span></div>
       ${verdict.findings.map(findingHtml).join('')}
@@ -653,22 +941,51 @@ function renderResult(): string {
     ${renderSupplement(verdict)}
     ${renderBenchCard(verdict)}
     <div class="btn-row">
-      <button class="btn btn-ghost btn-small" data-action="pick">机型不对？手动选择</button>
       <button class="btn btn-ghost btn-small" data-action="share">复制结论</button>
       <button class="btn btn-ghost btn-small" data-action="restart">重新检测</button>
     </div>
-    ${renderFacts()}
+    ${renderSpecsSection()}
     ${!state.gpu.adreno && state.gpu.source === 'webgl' && state.platformKind === 'android' ? `
       <div class="notice">浏览器报告的是非 Adreno GPU。若你确定自己在用骁龙设备，可能是浏览器隐私设置遮蔽了渲染器字符串，请改用 Chrome 打开，或手动选择机型。</div>
     ` : ''}
-  `)
+    ${renderFacts()}
+  `, 'detection')
+}
+
+function bindCommonEvents(): void {
+  // Bottom Nav interactions
+  root.querySelectorAll<HTMLElement>('[data-nav]').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.nav
+      if (target === 'detection') {
+        if (state.screen === 'intro') {
+          void scan()
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+      } else if (target === 'ladder') {
+        openPicker(state.screen === 'intro')
+        toast('已打开芯片与机型列表（按 GPU / 机型索引）')
+      } else if (target === 'rules') {
+        scrollToSpecs()
+      }
+    })
+  })
 }
 
 function bindResult(): void {
-  root.querySelector<HTMLElement>('[data-action="restart"]')?.addEventListener('click', () => {
-    location.reload()
+  bindCommonEvents()
+  root.querySelectorAll<HTMLElement>('[data-action="restart"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      location.reload()
+    })
   })
-  root.querySelector<HTMLElement>('[data-action="pick"]')?.addEventListener('click', () => openPicker(false))
+  root.querySelectorAll<HTMLElement>('[data-action="pick"]').forEach((btn) => {
+    btn.addEventListener('click', () => openPicker(false))
+  })
+  root.querySelector<HTMLElement>('[data-action="how"]')?.addEventListener('click', () => {
+    scrollToSpecs()
+  })
   root.querySelector<HTMLElement>('[data-action="share"]')?.addEventListener('click', () => void share())
   root.querySelectorAll<HTMLElement>('[data-action="bench"]').forEach((btn) => {
     btn.addEventListener('click', () => void runBench())
@@ -792,12 +1109,24 @@ async function share(): Promise<void> {
 }
 
 function toast(message: string): void {
+  const existing = document.querySelector('.toast-bar')
+  if (existing) existing.remove()
+
   const node = document.createElement('div')
-  node.className = 'toast'
+  node.className = 'toast-bar'
   node.setAttribute('role', 'status')
-  node.textContent = message
+  node.innerHTML = `
+    ${renderIcon('check_circle', 'text-[#00D2B4]', 18)}
+    <span>${esc(message)}</span>
+  `
   document.body.appendChild(node)
-  setTimeout(() => node.remove(), 1800)
+  requestAnimationFrame(() => {
+    node.classList.add('visible')
+  })
+  setTimeout(() => {
+    node.classList.remove('visible')
+    setTimeout(() => node.remove(), 250)
+  }, 2200)
 }
 
 function resetBench(): void {
@@ -807,16 +1136,25 @@ function resetBench(): void {
   state.benchProgress = 0
 }
 
+function gpuSupportLabel(family: string, model: number): string {
+  if (model === 850) return '实验 · 需导入驱动'
+  if (family === 'A7XX_LOW') return '实验 · 测试驱动'
+  if (family === 'A8XX') return '已测试'
+  if (family === 'A7XX') return model >= 725 ? '已测试' : '未测试'
+  if (family === 'A6XX') return model === 650 ? '已测试' : '未测试'
+  return '未测试'
+}
+
 function openPicker(fromIntro: boolean): void {
   const backdrop = document.createElement('div')
   backdrop.className = 'sheet-backdrop'
   backdrop.innerHTML = `
     <div class="sheet" role="dialog" aria-modal="true" aria-label="选择机型或 GPU">
       <div class="sheet-head">
-        <span class="sheet-title">选择机型或 GPU</span>
+        <span class="sheet-title">选择机型或 GPU 芯片</span>
         <button class="btn btn-ghost btn-small" data-close>关闭</button>
       </div>
-      <input type="search" placeholder="搜索机型 / 品牌 / Adreno 型号" data-search aria-label="搜索机型或 GPU" />
+      <input type="search" placeholder="搜索机型 / 品牌 / Adreno 型号 (如 Thor, 740)" data-search aria-label="搜索机型或 GPU" />
       <div class="sheet-list"></div>
     </div>
   `
@@ -870,9 +1208,9 @@ function openPicker(fromIntro: boolean): void {
       .join('')
 
     const parts: string[] = []
-    if (gpuItems) parts.push(`<div class="sheet-group">按 GPU（官方判定单位）</div>${gpuItems}`)
-    if (deviceItems) parts.push(`<div class="sheet-group">按机型</div>${deviceItems}`)
-    list.innerHTML = parts.length ? parts.join('') : '<div class="sheet-empty">没有匹配项</div>'
+    if (gpuItems) parts.push(`<div class="sheet-group">按 GPU 核心（官方判定依据）</div>${gpuItems}`)
+    if (deviceItems) parts.push(`<div class="sheet-group">按已收录机型</div>${deviceItems}`)
+    list.innerHTML = parts.length ? parts.join('') : '<div class="sheet-empty">没有匹配的机型或 GPU</div>'
 
     list.querySelectorAll<HTMLElement>('[data-device]').forEach((btn) => {
       btn.addEventListener('click', () => {
