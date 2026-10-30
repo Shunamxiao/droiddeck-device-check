@@ -19,6 +19,7 @@ import fact_check from '@material-symbols/svg-400/outlined/fact_check.svg?raw'
 import code from '@material-symbols/svg-400/outlined/code.svg?raw'
 import check_circle from '@material-symbols/svg-400/outlined/check_circle.svg?raw'
 import speed from '@material-symbols/svg-400/outlined/speed.svg?raw'
+import refresh from '@material-symbols/svg-400/outlined/refresh.svg?raw'
 
 const ICON_MAP: Record<string, string> = {
   videogame_asset,
@@ -39,6 +40,7 @@ const ICON_MAP: Record<string, string> = {
   code,
   check_circle,
   speed,
+  refresh,
 }
 
 export type IconName = keyof typeof ICON_MAP

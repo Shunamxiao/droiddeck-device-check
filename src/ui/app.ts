@@ -317,6 +317,11 @@ function shell(inner: string, currentTab: 'detection' | 'ladder' | 'rules' | 'ab
       </div>
     </header>
 
+    <div class="toast-bar" id="toast">
+      ${renderIcon('check_circle', 'text-[#00D2B4]', 18)}
+      <span id="toast-text">状态已更新</span>
+    </div>
+
     <main class="main-content">
       ${renderHeroCard()}
       ${inner}
@@ -384,7 +389,7 @@ function calculateReadinessPercent(verdict: Verdict): number {
   return calculated
 }
 
-function renderReadinessBlock(verdict: Verdict): string {
+function renderReadinessBlock(verdict: Verdict, badges: string, subtitle: string): string {
   const percent = calculateReadinessPercent(verdict)
   const isPlayable = verdict.tier === 'S' || verdict.tier === 'A' || (verdict.community && verdict.community.tier !== 'C')
   const footerLeft = isPlayable ? '满足 720p/60FPS 3A PC 游戏渲染吞吐' : '低于官方运行门槛，游戏兼容受限'
@@ -393,10 +398,19 @@ function renderReadinessBlock(verdict: Verdict): string {
   return `
     <div class="readiness-block">
       <div class="readiness-header">
-        <div class="readiness-tier-title">
-          <span class="tier-headline-text">兼容评级：Tier ${verdict.tier}</span>
-          <span class="tier-pill tier-pill-${verdict.tier}">${esc(verdict.tierLabel)}</span>
+        <div class="tier-top" style="gap:12px;min-width:0;flex:1;">
+          ${badges}
+          <div style="min-width:0;flex:1;">
+            <div class="tier-title-row">
+              <span class="tier-headline" style="font-size:16px;font-weight:700;color:var(--ink);">${esc(verdict.headline)}</span>
+              <span class="tier-pill tier-pill-${verdict.tier}">${esc(verdict.tierLabel)}</span>
+            </div>
+            <span class="muted small">${subtitle}</span>
+          </div>
         </div>
+      </div>
+      <div class="readiness-bar-row">
+        <span class="small muted" style="font-weight:600;">硬件就绪评级：Tier ${verdict.tier}</span>
         <span class="readiness-percent" id="readiness-percent">${percent}% 就绪率</span>
       </div>
       <div class="readiness-bar-wrap">
@@ -480,19 +494,36 @@ function renderSpecMatrix(verdict: Verdict): string {
 }
 
 function renderActionHub(isResult: boolean): string {
-  const mainBtn = isResult
-    ? `
-      <button class="btn-benchmark-main" id="btn-benchmark-main" data-action="bench" type="button">
-        ${renderIcon('bolt', '', 22)}
-        <span>开启深度适配检测 (Start Benchmark)</span>
-      </button>
-    `
-    : `
+  let mainBtn: string
+  if (!isResult) {
+    mainBtn = `
       <button class="btn-benchmark-main" data-action="scan" type="button">
         ${renderIcon('bolt', '', 22)}
         <span>开始检测 (Start Check)</span>
       </button>
     `
+  } else if (state.benchState === 'running') {
+    mainBtn = `
+      <button class="btn-benchmark-main" id="btn-benchmark-main" data-action="bench" type="button" disabled style="opacity:0.92;">
+        <span class="icon-wrap spin" style="width:20px;height:20px;">${renderIcon('refresh', '', 20)}</span>
+        <span>${esc(state.benchLabel || '正在执行着色器深度测算...')} (${Math.round(state.benchProgress * 100)}%)</span>
+      </button>
+    `
+  } else if (state.benchState === 'done' && state.bench) {
+    mainBtn = `
+      <button class="btn-benchmark-main" id="btn-benchmark-main" data-action="bench" type="button">
+        ${renderIcon('check_circle', '', 22)}
+        <span>实测跑分 ${state.bench.index} 分 (点击重新测算)</span>
+      </button>
+    `
+  } else {
+    mainBtn = `
+      <button class="btn-benchmark-main" id="btn-benchmark-main" data-action="bench" type="button">
+        ${renderIcon('bolt', '', 22)}
+        <span>开启深度适配检测 (Start Benchmark)</span>
+      </button>
+    `
+  }
 
   return `
     <div class="action-hub">
@@ -756,15 +787,8 @@ function renderVerdictCard(verdict: Verdict): string {
         </div>
       </div>
 
-      ${renderReadinessBlock(verdict)}
+      ${renderReadinessBlock(verdict, badges, subtitle)}
 
-      <div class="tier-top">
-        ${badges}
-        <div>
-          <p class="tier-headline">${esc(verdict.headline)}</p>
-          <span class="muted small">${subtitle}</span>
-        </div>
-      </div>
       <p class="tier-summary">${esc(verdict.summary)}</p>
       <div class="tier-meta">
         <span class="tag ${verdict.confidence === 'high' ? 'tag-ok' : verdict.confidence === 'low' ? 'tag-warn' : ''}">${CONFIDENCE_LABEL[verdict.confidence]}</span>
@@ -1109,24 +1133,16 @@ async function share(): Promise<void> {
 }
 
 function toast(message: string): void {
-  const existing = document.querySelector('.toast-bar')
-  if (existing) existing.remove()
+  const node = document.getElementById('toast')
+  const text = document.getElementById('toast-text')
+  if (!node || !text) return
 
-  const node = document.createElement('div')
-  node.className = 'toast-bar'
-  node.setAttribute('role', 'status')
-  node.innerHTML = `
-    ${renderIcon('check_circle', 'text-[#00D2B4]', 18)}
-    <span>${esc(message)}</span>
-  `
-  document.body.appendChild(node)
-  requestAnimationFrame(() => {
-    node.classList.add('visible')
-  })
-  setTimeout(() => {
+  text.textContent = message
+  node.classList.add('visible')
+  clearTimeout((window as unknown as { _toastTimer?: number })._toastTimer)
+  ;(window as unknown as { _toastTimer?: number })._toastTimer = window.setTimeout(() => {
     node.classList.remove('visible')
-    setTimeout(() => node.remove(), 250)
-  }, 2200)
+  }, 2300)
 }
 
 function resetBench(): void {
@@ -1150,6 +1166,7 @@ function openPicker(fromIntro: boolean): void {
   backdrop.className = 'sheet-backdrop'
   backdrop.innerHTML = `
     <div class="sheet" role="dialog" aria-modal="true" aria-label="选择机型或 GPU">
+      <div class="sheet-handle"></div>
       <div class="sheet-head">
         <span class="sheet-title">选择机型或 GPU 芯片</span>
         <button class="btn btn-ghost btn-small" data-close>关闭</button>
