@@ -20,6 +20,12 @@ import code from '@material-symbols/svg-400/outlined/code.svg?raw'
 import check_circle from '@material-symbols/svg-400/outlined/check_circle.svg?raw'
 import speed from '@material-symbols/svg-400/outlined/speed.svg?raw'
 import refresh from '@material-symbols/svg-400/outlined/refresh.svg?raw'
+import desktop_windows from '@material-symbols/svg-400/outlined/desktop_windows.svg?raw'
+import content_copy from '@material-symbols/svg-400/outlined/content_copy.svg?raw'
+import close from '@material-symbols/svg-400/outlined/close.svg?raw'
+import arrow_back from '@material-symbols/svg-400/outlined/arrow_back.svg?raw'
+import download from '@material-symbols/svg-400/outlined/download.svg?raw'
+import warning from '@material-symbols/svg-400/outlined/warning.svg?raw'
 
 const ICON_MAP: Record<string, string> = {
   videogame_asset,
@@ -41,6 +47,12 @@ const ICON_MAP: Record<string, string> = {
   check_circle,
   speed,
   refresh,
+  desktop_windows,
+  content_copy,
+  close,
+  arrow_back,
+  download,
+  warning,
 }
 
 export type IconName = keyof typeof ICON_MAP

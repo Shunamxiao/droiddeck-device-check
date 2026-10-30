@@ -24,7 +24,7 @@ interface DeviceRecord {
 
 const DEVICES = deviceData.devices as DeviceRecord[]
 
-type Screen = 'intro' | 'scan' | 'result'
+type Screen = 'intro' | 'scan' | 'result' | 'about'
 type StepState = 'idle' | 'active' | 'done'
 type BenchState = 'idle' | 'running' | 'done' | 'failed'
 
@@ -97,6 +97,28 @@ const state: State = {
 }
 
 let root: HTMLElement
+
+const LOGO_URL = 'https://cdn.apks.cc/uploads/a635ac2990469f9408489cfb95c3e6bc.png'
+const REPO_URL = 'https://github.com/Shunamxiao/droiddeck-device-check'
+const OFFICIAL_URL = 'https://github.com/Droid-Deck/DroidDeck'
+
+/**
+ * Desktop heuristic: a fine + hovering primary pointer and a non-mobile UA.
+ * Touch points are intentionally ignored — Windows touch laptops report
+ * maxTouchPoints > 0 while still being a desktop browser.
+ * Purely presentational — never participates in the verdict, never blocks the flow.
+ */
+const IS_DESKTOP = (() => {
+  try {
+    const fineHover = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false
+    const mobileUa = /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(navigator.userAgent)
+    return fineHover && !mobileUa
+  } catch {
+    return false
+  }
+})()
+
+let returnScreen: Screen = 'intro'
 
 const esc = (value: string | null | undefined): string =>
   String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] ?? ch)
@@ -283,33 +305,51 @@ async function collect(): Promise<void> {
 function render(): void {
   if (state.screen === 'intro') {
     root.innerHTML = renderIntro()
+    bindShell()
     bindIntro()
     return
   }
   if (state.screen === 'scan') {
     root.innerHTML = renderScan()
+    bindShell()
+    return
+  }
+  if (state.screen === 'about') {
+    root.innerHTML = renderAbout()
+    bindShell()
+    bindAbout()
     return
   }
   root.innerHTML = renderResult()
+  bindShell()
   bindResult()
+}
+
+interface ShellOptions {
+  tab?: 'detection' | 'ladder' | 'rules' | 'about'
+  hero?: boolean
+  disclaimer?: boolean
+  pcHint?: boolean
 }
 
 /**
  * Global Shell: Fixed Navy Header + Main Content + Fixed Bottom Nav + Toast
  */
-function shell(inner: string, currentTab: 'detection' | 'ladder' | 'rules' | 'about' = 'detection'): string {
+function shell(inner: string, options: ShellOptions = {}): string {
+  const { tab = 'detection', hero = true, disclaimer = true, pcHint = true } = options
   return `
     <header class="app-header">
       <div class="app-header-inner">
         <a class="header-brand" href="javascript:void(0)" data-action="restart">
           <div class="brand-icon">
             ${renderIcon('videogame_asset', '', 18)}
+            <img class="brand-logo" src="${LOGO_URL}" alt="DroidDeck" width="32" height="32" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()" />
           </div>
           <span class="brand-title">DroidDeck</span>
           <span class="header-tag">硬件探针</span>
         </a>
         <div class="header-actions">
-          <a class="github-pill" href="https://github.com/Droid-Deck/DroidDeck" rel="noopener noreferrer" target="_blank">
+          <a class="github-pill" href="${OFFICIAL_URL}" rel="noopener noreferrer" target="_blank">
             <svg class="w-3.5 h-3.5 fill-currentColor" style="width:14px;height:14px;" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
             <span>GitHub</span>
           </a>
@@ -323,31 +363,58 @@ function shell(inner: string, currentTab: 'detection' | 'ladder' | 'rules' | 'ab
     </div>
 
     <main class="main-content">
-      ${renderHeroCard()}
+      ${pcHint ? renderPcHint() : ''}
+      ${hero ? renderHeroCard() : ''}
       ${inner}
-      ${renderDisclaimerCard()}
+      ${disclaimer ? renderDisclaimerCard() : ''}
     </main>
 
     <nav class="bottom-nav">
       <div class="bottom-nav-inner">
-        <button class="nav-tab ${currentTab === 'detection' ? 'active' : ''}" type="button" data-nav="detection">
+        <button class="nav-tab ${tab === 'detection' ? 'active' : ''}" type="button" data-nav="detection">
           ${renderIcon('memory', '', 20)}
           <span>设备检测</span>
         </button>
-        <button class="nav-tab ${currentTab === 'ladder' ? 'active' : ''}" type="button" data-nav="ladder">
+        <button class="nav-tab ${tab === 'ladder' ? 'active' : ''}" type="button" data-nav="ladder">
           ${renderIcon('leaderboard', '', 20)}
           <span>芯片天梯</span>
         </button>
-        <button class="nav-tab ${currentTab === 'rules' ? 'active' : ''}" type="button" data-nav="rules">
+        <button class="nav-tab ${tab === 'rules' ? 'active' : ''}" type="button" data-nav="rules">
           ${renderIcon('fact_check', '', 20)}
           <span>判定规则</span>
         </button>
-        <a class="nav-tab" href="https://github.com/Droid-Deck/DroidDeck" rel="noopener noreferrer" target="_blank">
+        <button class="nav-tab ${tab === 'about' ? 'active' : ''}" type="button" data-nav="about">
           ${renderIcon('code', '', 20)}
           <span>关于开源</span>
-        </a>
+        </button>
       </div>
     </nav>
+  `
+}
+
+function renderPcHint(): string {
+  if (!IS_DESKTOP) return ''
+  if (sessionStorage.getItem('dd.pcHintDismissed') === '1') return ''
+  return `
+    <div class="pc-hint" id="pc-hint">
+      <div class="pc-hint-head">
+        <div class="pc-hint-icon">${renderIcon('desktop_windows', '', 17)}</div>
+        <span class="pc-hint-title">当前是电脑浏览器</span>
+      </div>
+      <p class="pc-hint-text">
+        本页的 GPU 判定只对 Android 手机 / 掌机有意义，电脑上通常会得到「非 Adreno → 不支持」的结论。想看真实结果，请用手机打开同一网址。
+      </p>
+      <div class="pc-hint-actions">
+        <button class="pc-hint-btn pc-hint-btn-primary" type="button" data-action="copy-link">
+          ${renderIcon('content_copy', '', 14)}
+          <span>复制本页链接</span>
+        </button>
+        <button class="pc-hint-btn" type="button" data-action="dismiss-hint">
+          ${renderIcon('close', '', 14)}
+          <span>我知道了</span>
+        </button>
+      </div>
+    </div>
   `
 }
 
@@ -644,11 +711,10 @@ function renderIntro(): string {
   return shell(`
     ${renderActionHub(false)}
     ${renderSpecsSection()}
-  `, 'detection')
+  `)
 }
 
 function bindIntro(): void {
-  bindCommonEvents()
   root.querySelector<HTMLElement>('[data-action="scan"]')?.addEventListener('click', () => void scan())
   root.querySelector<HTMLElement>('[data-action="pick"]')?.addEventListener('click', () => openPicker(true))
   root.querySelector<HTMLElement>('[data-action="how"]')?.addEventListener('click', () => {
@@ -693,7 +759,7 @@ function renderScan(): string {
       <div class="card-head"><span class="card-title">实时探针捕获</span></div>
       <div class="rows">${gpuLine}</div>
     </div>
-  `, 'detection')
+  `)
 }
 
 function findingHtml(f: Finding): string {
@@ -973,15 +1039,161 @@ function renderResult(): string {
       <div class="notice">浏览器报告的是非 Adreno GPU。若你确定自己在用骁龙设备，可能是浏览器隐私设置遮蔽了渲染器字符串，请改用 Chrome 打开，或手动选择机型。</div>
     ` : ''}
     ${renderFacts()}
-  `, 'detection')
+  `)
 }
 
-function bindCommonEvents(): void {
+function renderAbout(): string {
+  return shell(`
+    <div class="about-page">
+      <div class="card about-head">
+        <button class="about-back" type="button" data-action="about-back" aria-label="返回">
+          ${renderIcon('arrow_back', '', 18)}
+        </button>
+        <div>
+          <div class="about-title">关于 DroidDeck 与本项目</div>
+          <div class="about-sub">DroidDeck 是什么 · 硬性门槛 · 开源地址</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title-group">
+            ${renderIcon('videogame_asset', 'text-[#006B5B]', 20)}
+            <span class="card-title">DroidDeck 是什么</span>
+          </div>
+          <span class="chip chip-teal">SteamOS on Android</span>
+        </div>
+        <p class="about-lead">
+          DroidDeck 把 SteamOS 的体验带到了 Android：在骁龙 Adreno 掌机 / 手机上跑 Valve 的 Steam 客户端（大屏模式），
+          并通过 Valve 的 ARM64 Proton 运行 Windows 游戏。
+        </p>
+        <div class="about-quote">
+          官方原话：DroidDeck brings the SteamOS experience to Android — Valve's Steam client in Big Picture on your Adreno handheld,
+          with Windows games through Valve's ARM64 Proton.
+        </div>
+        <div class="about-meta">
+          <span class="tag tag-ok">GPL-3.0</span>
+          <span class="tag">Android 9+</span>
+          <span class="tag">免 Root</span>
+          <span class="tag">Adreno 掌机</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title-group">
+            ${renderIcon('rule', 'text-[#006B5B]', 19)}
+            <span class="card-title">硬性门槛速览</span>
+          </div>
+        </div>
+        <div class="about-list">
+          <div class="about-list-item">
+            <span class="about-list-dot f-ok">✓</span>
+            <span><strong>GPU</strong>：Adreno 730 及以上，或 Adreno 8xx 为支持档；Adreno 6xx 为实验档（DX11 走 DXVK 2 可能能跑，DX12 仍可能崩溃）。</span>
+          </div>
+          <div class="about-list-item">
+            <span class="about-list-dot f-blocker">×</span>
+            <span><strong>不支持</strong>：Mali、Xclipse、PowerVR、Adreno 710。官方构建只带 Adreno 的 Turnip 驱动。</span>
+          </div>
+          <div class="about-list-item">
+            <span class="about-list-dot f-ok">✓</span>
+            <span><strong>系统</strong>：Android 9 或更新，无需 Root；Android 14+ 启动 Steam 前需在开发者选项开启「停用子进程限制」。</span>
+          </div>
+          <div class="about-list-item">
+            <span class="about-list-dot f-info">i</span>
+            <span><strong>空间</strong>：运行时约 3 GB，桌面与模拟器再约 1.1 GB；建议预留 10 GB 以上。</span>
+          </div>
+          <div class="about-list-item">
+            <span class="about-list-dot f-info">i</span>
+            <span><strong>安装</strong>：下载 APK → 安装 Linux 运行时 → 按 Play 登录 Steam。APK 只从官方 Releases 获取。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="about-warn">
+          ${renderIcon('warning', '', 16)}
+          <div>
+            <strong>官方没有独立网站。</strong>
+            DroidDeck 的 README 明确写了：不要点击任何自称 DroidDeck 团队的网站上的下载链接。
+            安装包只从 GitHub 仓库的 Releases 页面获取。
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title-group">
+            ${renderIcon('code', 'text-[#006B5B]', 19)}
+            <span class="card-title">本项目的开源地址</span>
+          </div>
+          <span class="chip chip-slate">第三方 · 非官方</span>
+        </div>
+        <p class="about-lead" style="font-size:12.5px;">
+          本页是一个纯静态的第三方检测工具：Vite + 原生 TypeScript，零运行时依赖，图标在构建期内联，
+          GPU 判定与跑分全部在浏览器本地完成，不会上传任何设备信息。
+        </p>
+        <div class="about-link-row">
+          <a class="about-link-card" href="${REPO_URL}" rel="noopener noreferrer" target="_blank">
+            <span class="about-link-main">
+              <span class="about-link-label">本工具源码仓库</span>
+              <span class="about-link-url">github.com/Shunamxiao/droiddeck-device-check</span>
+            </span>
+            <span class="about-link-icon">${renderIcon('open_in_new', '', 16)}</span>
+          </a>
+          <a class="about-link-card" href="${OFFICIAL_URL}/releases" rel="noopener noreferrer" target="_blank">
+            <span class="about-link-main">
+              <span class="about-link-label">DroidDeck 官方 Release</span>
+              <span class="about-link-url">github.com/Droid-Deck/DroidDeck/releases</span>
+            </span>
+            <span class="about-link-icon">${renderIcon('download', '', 16)}</span>
+          </a>
+        </div>
+        <div class="about-meta">
+          <span class="tag">判定对齐 GpuInfo.kt</span>
+          <span class="tag">29 个 Adreno 型号</span>
+          <span class="tag">91 款机型</span>
+          <span class="tag">离线可用</span>
+        </div>
+      </div>
+
+      <div class="card disclaimer-card">
+        <div class="card-head">
+          <div class="card-title-group">
+            ${renderIcon('info', 'text-[#006B5B]', 18)}
+            <span class="card-title" style="font-size:13px;">免责声明</span>
+          </div>
+        </div>
+        <div class="disclaimer-box">
+          本项目与 DroidDeck 项目无隶属关系，不提供 APK 下载。结论基于官方 README 与源码中的 GPU 判定（GpuInfo.kt）；
+          Mali / Xclipse 的「第三方」档位来自社区实测，非官方承诺。本页只做判定，不提供第三方构建的下载地址。
+          浏览器只能看到 Android 原生 GPU，测不出 Proton / FEX 翻译后的实际帧率。
+        </div>
+      </div>
+    </div>
+  `, { tab: 'about', hero: false, disclaimer: false, pcHint: false })
+}
+
+function bindAbout(): void {
+  root.querySelector<HTMLElement>('[data-action="about-back"]')?.addEventListener('click', () => {
+    state.screen = returnScreen
+    render()
+    window.scrollTo({ top: 0 })
+  })
+}
+
+function bindShell(): void {
   // Bottom Nav interactions
   root.querySelectorAll<HTMLElement>('[data-nav]').forEach((tab) => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.nav
       if (target === 'detection') {
+        if (state.screen === 'about') {
+          state.screen = returnScreen
+          render()
+          window.scrollTo({ top: 0 })
+          return
+        }
         if (state.screen === 'intro') {
           void scan()
         } else {
@@ -991,14 +1203,41 @@ function bindCommonEvents(): void {
         openPicker(state.screen === 'intro')
         toast('已打开芯片与机型列表（按 GPU / 机型索引）')
       } else if (target === 'rules') {
+        if (state.screen === 'about') {
+          goAbout()
+        }
         scrollToSpecs()
+      } else if (target === 'about') {
+        goAbout()
       }
     })
   })
+
+  root.querySelector<HTMLElement>('[data-action="copy-link"]')?.addEventListener('click', () => void copyLink())
+  root.querySelector<HTMLElement>('[data-action="dismiss-hint"]')?.addEventListener('click', () => {
+    sessionStorage.setItem('dd.pcHintDismissed', '1')
+    root.querySelector<HTMLElement>('#pc-hint')?.remove()
+  })
+}
+
+async function copyLink(): Promise<void> {
+  const url = `${location.origin}${location.pathname}`
+  try {
+    await navigator.clipboard.writeText(url)
+    toast('链接已复制，请用手机打开')
+  } catch {
+    toast('复制失败，请手动输入网址')
+  }
+}
+
+function goAbout(): void {
+  if (state.screen !== 'about') returnScreen = state.screen
+  state.screen = 'about'
+  render()
+  window.scrollTo({ top: 0 })
 }
 
 function bindResult(): void {
-  bindCommonEvents()
   root.querySelectorAll<HTMLElement>('[data-action="restart"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       location.reload()

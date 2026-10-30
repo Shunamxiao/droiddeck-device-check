@@ -121,6 +121,37 @@ try {
     frozenFacts.slice(0, 140),
   )
 
+  // 关于开源：应用内视图切换与返回
+  await page.locator('[data-nav="about"]').click()
+  await page.waitForSelector('.about-page', { timeout: 5000 })
+  const aboutText = await page.locator('.about-page').innerText()
+  check('关于开源切换为应用内视图', (await page.locator('.about-page').count()) === 1)
+  check('关于页含本仓库地址', aboutText.includes('github.com/Shunamxiao/droiddeck-device-check'), aboutText.slice(0, 120))
+  check('关于页仍停留在同一 URL', page.url().split('?')[0] === BASE.split('?')[0], page.url())
+  await page.locator('[data-nav="detection"]').click()
+  await page.waitForSelector('.tier-badge', { timeout: 5000 })
+  check('从关于页返回检测结果', (await page.locator('.about-page').count()) === 0)
+
+  // PC 端：不阻塞的提示条 + 520px 手机框
+  const desktopCtx = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    deviceScaleFactor: 1,
+  })
+  const desktop = await desktopCtx.newPage()
+  const desktopErrors = []
+  desktop.on('pageerror', (err) => desktopErrors.push(err.message))
+  await desktop.goto(BASE, { waitUntil: 'networkidle' })
+  const hintCount = await desktop.locator('#pc-hint').count()
+  check('PC 端显示手机提示条', hintCount === 1, String(hintCount))
+  const hintText = hintCount ? await desktop.locator('#pc-hint').innerText() : ''
+  check('提示条文案指向手机', hintText.includes('电脑') && hintText.includes('手机'), hintText.slice(0, 80))
+  const contentWidth = await desktop.evaluate(() => document.querySelector('.main-content')?.getBoundingClientRect().width ?? 0)
+  check('PC 端内容限制在 520px', Math.round(contentWidth) <= 520, String(contentWidth))
+  await desktop.getByRole('button', { name: '开始检测' }).click()
+  await desktop.waitForSelector('.tier-badge', { timeout: 20000 })
+  check('PC 端提示不阻塞检测', (await desktop.locator('.tier-badge').count()) > 0)
+  check('PC 端无页面报错', desktopErrors.length === 0, desktopErrors.join(' | '))
+
   await page.screenshot({ path: 'dist/smoke-result.png', fullPage: true })
 } catch (err) {
   failures++
